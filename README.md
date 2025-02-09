@@ -1,127 +1,117 @@
-Local RAG Project
+This project demonstrates a local Retrieval-Augmented Generation (RAG) setup using LangChain, Chroma (for vector storage), and a Flask + Streamlit front-end/back-end.
 
-This repository demonstrates a local Retrieval-Augmented Generation (RAG) setup using LangChain, Chroma (for vector storage), and a Flask + Streamlit front-end/back-end. Additionally, it includes:
+It includes:
 
-    Rotating User Agents to avoid 403 blocks while scraping.
-    PDF / DOCX / TXT / MD Embedding for general file ingestion.
-    Sitemap Scraper that recursively parses Yoast/WordPress sitemaps (or standard sitemaps) to index entire domains.
-    Domain-level grouping of scraped pages for “chat with this whole domain” functionality.
+    Rotating User Agents to reduce 403 blocks when scraping (useful for WordPress/Yoast sitemaps and common scraper blocking techniques).
+    PDF, DOCX, TXT, MD, and more - embedding for general file ingestion.
+    A sitemap scraper that recursively parses WordPress/Yoast or standard sitemaps to index entire domains.
+    Domain-level grouping of scraped pages, so you can chat with an entire domain at once.
 
-Features
+FEATURES
 
-    Embed Documents: Upload PDF, DOCX, TXT, MD; store chunks in Chroma.
-    Query Database (RAG):
-        Choose “All Documents,” a specific PDF, or a scraped domain.
-        The LLM retrieves context from the selected source(s) to generate answers.
-    NO RAG Chat: Directly converse with the LLM without retrieval.
-    Sitemap Scraper:
-        Handles sitemap indexes (WordPress, Yoast) and normal XML sitemaps.
-        Rotates user agents for each request to reduce 403 errors.
-        Embeds scraped content (with domain-based grouping).
+    Embed Documents
+    You can upload PDF, DOCX, TXT, or MD files. The chunks are stored in Chroma.
 
-Project Structure
+    Query Database (RAG)
+    You can choose “All Documents,” a specific PDF, or a scraped domain. The system retrieves relevant chunks from your chosen docs or domains and then passes them to the LLM to generate an answer.
+
+    NO RAG Chat
+    You can directly converse with the LLM without any retrieval context.
+
+    Sitemap Scraper
+    Recursively parses sub-sitemaps (including Yoast-style sitemap indexes) and rotates user agents to help avoid 403 errors. It then embeds the scraped data with domain-based grouping.
+
+REPOSITORY STRUCTURE
 
 .
-├── app.py                  # Main Flask server (endpoints for embed/query/list_docs/etc.)
+├── app.py                  # Main Flask server (endpoints: embed, query, list_docs, etc.)
 ├── app_frontend.py         # Streamlit front-end with four tabs (Embed, Query, NO RAG, Sitemap Scraper)
-├── embed.py                # Embeds uploaded files (pdf/docx/txt/md) using UnstructuredFileLoader
-├── get_vector_db.py        # Returns a Chroma-based vector store with OllamaEmbeddings
-├── query.py                # RAG query logic, optionally filtering by doc or domain
-├── rotating_user_agent.py  # Rotating user-agent logic & recursive sitemap parser
-├── requirements.txt        # (Optionally) Python dependencies
+├── embed.py                # Embeds uploaded files using UnstructuredFileLoader
+├── get_vector_db.py        # Returns a Chroma-based vector store configured with OllamaEmbeddings
+├── query.py                # RAG query logic (filters by doc or domain)
+├── rotating_user_agent.py  # Handles rotating user-agent logic & recursive sitemap parsing
+├── requirements.txt        # Python dependencies (optional)
 └── README.md               # This readme
 
-Requirements
+REQUIREMENTS
 
-    Python 3.8+ recommended.
-    The following Python libraries (install via pip install):
+    Python 3.8 or higher is recommended.
+    You need various Python libraries: streamlit, requests, beautifulsoup4, lxml, pandas, unstructured, langchain_community, flask, python-dotenv, werkzeug (usually installed with Flask).
+    
+    requirements.txt:
+
         streamlit
         requests
         beautifulsoup4
         lxml
         pandas
-        unstructured and related dependencies (for multi-file ingestion)
-        langchain_community (or whichever version you’re using for ChatOllama, OllamaEmbeddings, etc.)
-        werkzeug (for secure_filename, typically installed with Flask)
-        dotenv (if you use environment variables in .env)
+        unstructured
+        langchain_community
+        flask
+        python-dotenv
+        werkzeug
 
-Example:
+You can install everything by running: pip install -r requirements.txt
 
-pip install streamlit requests beautifulsoup4 lxml pandas unstructured langchain_community flask python-dotenv
+If you do not have a requirements.txt, install each library manually.
 
-Getting Started
+INSTALLING AND USING MODELS
 
-Create a Virtual Environment:
+This project references ChatOllama and OllamaEmbeddings from langchain_community. That typically requires Ollama if you want to run local LLMs on macOS or certain Linux builds.
 
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or .\venv\Scripts\activate  # Windows
+    Install Ollama by downloading from the official Ollama GitHub Releases page.
+    Verify installation by running: ollama --version
+    Pull the LLM model you plan to use, for example, mistral is written in to this project: ollama pull mistral
+    Pull a text embedding model, for example: ollama pull nomic-embed-text
+    
+    [Run the Ollama server: ollama serve 
+    Keep this process running so the system can access your models.]
 
-Install Dependencies:
+ENVIRONMENT VARIABLES
 
-pip install -r requirements.txt
+You can create a .env file in the project root. Possible keys are: 
+LLM_MODEL=mistral
+TEXT_EMBEDDING_MODEL=nomic-embed-text
+CHROMA_PATH=chroma
+COLLECTION_NAME=local-rag
 
-Set up Environment Variables (optional):
+Alternatively, export them directly in your shell. Make sure they match any models you pulled with Ollama.
 
-    .env file with keys like:
+SETUP AND INSTALLATION
 
-        LLM_MODEL=mistral
-        TEXT_EMBEDDING_MODEL=nomic-embed-text
-        CHROMA_PATH=chroma
-        COLLECTION_NAME=local-rag
+    Clone the repository: git clone https://github.com/Floproast500/local-rag.git cd local-rag
 
-    Or rely on defaults in the code.
+    (Optional) Create and activate a virtual environment: python3 -m venv venv source venv/bin/activate (Use the equivalent command for Windows if needed.)
 
-Running the App
+    Install dependencies: pip install -r requirements.txt (Or install libraries manually if no requirements.txt.)
 
-    Start the Flask Backend:
+    Install and run Ollama as described above. Also pull and serve your chosen models.
 
-python3 app.py
+    Start the Flask backend: python3 app.py This will run on http://localhost:8080.
 
-    This launches the backend on http://localhost:8080.
+    Start the Streamlit frontend: streamlit run app_frontend.py This will open on http://localhost:8501.
 
-Start the Streamlit Frontend:
+USAGE FLOW
 
-    streamlit run app_frontend.py
+    Embed Document Tab: Upload PDF, DOCX, TXT, or MD. These files are chunked and stored in Chroma, with metadata["filename"] set.
+    Query Database (RAG) Tab: You can select All Documents, a PDF, or Scraped Domain. Enter your query and click Submit to get an LLM-powered answer with retrieved context.
+    NO RAG Chat Tab: A direct conversation with the LLM, without retrieving anything.
+    Sitemap Scraper Tab: Enter a sitemap URL. The scraper will recursively parse the sitemap and sub-sitemaps, rotating user agents to avoid 403. Click "Embed CSV" to store the scraped data in Chroma, where each page is associated with metadata["domain"]. Then you can query the entire domain at once.
 
-        This opens the frontend at http://localhost:8501 in your browser.
+TROUBLESHOOTING
 
-Usage Flow
+If you do not see your scraped domain in the Query Database dropdown, ensure that you have clicked "Embed CSV" after scraping, and then refresh the browser. You can also run curl localhost:8080/list_documents to confirm the domain is in scrapedDomains.
 
-    Embed Document Tab
-        Upload a PDF, DOCX, TXT, or MD file.
-        Chunks are stored in Chroma with metadata["filename"] = "<the uploaded filename>".
+If you encounter 403 errors during scraping, rotating user agents may not be enough for certain sites, so consider additional steps like proxies, time delays, or respecting robots.txt.
 
-    Query Database Tab
-        Dropdown:
-            All Documents
-            PDF: someFile.pdf
-            Scraped Domain: example.com
-        Enter a query, click Submit to do RAG.
-        The system uses a retrieval step + ChatOllama to generate answers.
+Large PDFs or sitemaps may be slow to embed; you can adjust chunk size or add concurrency.
 
-    NO RAG Chat Tab
-        Type your question or message.
-        Directly calls the LLM (no retrieval from docs).
+If Ollama cannot find a model, verify you pulled that model name and that ollama serve is running in the background.
 
-    Sitemap Scraper Tab
-        Enter a sitemap URL (index or normal).
-        On “Scrape Sitemap,” the code:
-            Recursively expands sub-sitemaps if needed (Yoast, etc.).
-            Uses rotating user agents to reduce 403 blocks.
-            Collects (URL, Content) for each final page.
-        Click “Embed CSV” to store the results in Chroma:
-            Each chunk has metadata["domain"] = parsedDomain, so you can chat with an entire domain at once.
+CONTRIBUTING
 
-Troubleshooting
+Feel free to open issues or pull requests to improve the codebase, fix bugs, or add new features such as advanced model selection, multi-domain queries, or proxy rotation for scraping.
 
-    Not seeing a scraped domain in the Query Database dropdown?
-        Make sure you clicked “Embed CSV” after scraping.
-        Confirm in the console/logs that scrapedDomains is returned by GET /list_documents.
-    403 Errors while scraping?**
-        We rotate user agents, but some sites block more aggressively. Consider adding proxies or longer delays between requests.
-    Large PDFs or big sitemaps can be slow to embed. Consider chunk size, concurrency, and other optimizations.
+LICENSE
 
-Contributing
-
-    Feel free to open issues or PRs to improve the codebase, fix bugs, or add new features like advanced model selection, multi-domain queries, or proxy rotation for scraping.
+You may release this project under the MIT License or any license of your choosing. Update the LICENSE file or this readme accordingly.
