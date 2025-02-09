@@ -24,6 +24,7 @@ FEATURES
 REPOSITORY STRUCTURE
 
 .
+
 ├── app.py                  # Main Flask server (endpoints: embed, query, list_docs, etc.)
 
 ├── app_frontend.py         # Streamlit front-end with four tabs (Embed, Query, NO RAG, Sitemap Scraper)
