@@ -1,4 +1,3 @@
-
 import os
 from langchain_community.chat_models import ChatOllama
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
@@ -9,54 +8,56 @@ from get_vector_db import get_vector_db
 
 LLM_MODEL = os.getenv('LLM_MODEL', 'mistral')
 
-# Function to get the prompt templates for generating alternative questions and answering based on context
 def get_prompt():
     QUERY_PROMPT = PromptTemplate(
         input_variables=["question"],
         template="""You are an AI language model assistant. Your task is to generate five
         different versions of the given user question to retrieve relevant documents from
-        a vector database. By generating multiple perspectives on the user question, your
-        goal is to help the user overcome some of the limitations of the distance-based
-        similarity search. Provide these alternative questions separated by newlines.
-        Original question: {question}""",
+        a vector database. By generating multiple perspectives on the user question,
+        your goal is to help the user overcome limitations of distance-based similarity.
+        
+        Original question: {question}
+        """
     )
 
     template = """Answer the question based ONLY on the following context:
     {context}
     Question: {question}
     """
-
     prompt = ChatPromptTemplate.from_template(template)
-
     return QUERY_PROMPT, prompt
 
-# Main function to handle the query process
-def query(input):
-    if input:
-        # Initialize the language model with the specified model name
-        llm = ChatOllama(model=LLM_MODEL)
-        # Get the vector database instance
-        db = get_vector_db()
-        # Get the prompt templates
-        QUERY_PROMPT, prompt = get_prompt()
+def query(user_query, doc_type=None, doc_name=None):
+    """
+    If doc_type=='pdf', filter by metadata["filename"] = doc_name
+    If doc_type=='scraped_domain', filter by metadata["domain"] = doc_name
+    Otherwise, no filter => all docs
+    """
+    if not user_query:
+        return None
 
-        # Set up the retriever to generate multiple queries using the language model and the query prompt
-        retriever = MultiQueryRetriever.from_llm(
-            db.as_retriever(), 
-            llm,
-            prompt=QUERY_PROMPT
-        )
+    llm = ChatOllama(model=LLM_MODEL)
+    db = get_vector_db()
+    QUERY_PROMPT, prompt = get_prompt()
 
-        # Define the processing chain to retrieve context, generate the answer, and parse the output
-        chain = (
-            {"context": retriever, "question": RunnablePassthrough()}
-            | prompt
-            | llm
-            | StrOutputParser()
-        )
+    metadata_filter = None
+    if doc_type == "pdf" and doc_name:
+        metadata_filter = {"filename": doc_name}
+    elif doc_type == "scraped_domain" and doc_name:
+        metadata_filter = {"domain": doc_name}
 
-        response = chain.invoke(input)
+    retriever = MultiQueryRetriever.from_llm(
+        retriever=db.as_retriever(search_kwargs={"filter": metadata_filter}),
+        llm=llm,
+        prompt=QUERY_PROMPT
+    )
 
-        return response
+    chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
 
-    return None
+    response = chain.invoke(user_query)
+    return response
