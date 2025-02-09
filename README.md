@@ -25,12 +25,19 @@ REPOSITORY STRUCTURE
 
 .
 ├── app.py                  # Main Flask server (endpoints: embed, query, list_docs, etc.)
+
 ├── app_frontend.py         # Streamlit front-end with four tabs (Embed, Query, NO RAG, Sitemap Scraper)
+
 ├── embed.py                # Embeds uploaded files using UnstructuredFileLoader
+
 ├── get_vector_db.py        # Returns a Chroma-based vector store configured with OllamaEmbeddings
+
 ├── query.py                # RAG query logic (filters by doc or domain)
+
 ├── rotating_user_agent.py  # Handles rotating user-agent logic & recursive sitemap parsing
+
 ├── requirements.txt        # Python dependencies (optional)
+
 └── README.md               # This readme
 
 REQUIREMENTS
